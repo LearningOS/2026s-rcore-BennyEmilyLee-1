@@ -54,6 +54,7 @@ lazy_static! {
         let mut tasks = [TaskControlBlock {
             task_cx: TaskContext::zero_init(),
             task_status: TaskStatus::UnInit,
+            syscall_counts: [0; 512],
         }; MAX_APP_NUM];
         for (i, task) in tasks.iter_mut().enumerate() {
             task.task_cx = TaskContext::goto_restore(init_app_cx(i));
@@ -72,6 +73,26 @@ lazy_static! {
 }
 
 impl TaskManager {
+    /// Get current syscall count for a given syscall id
+    pub fn get_syscall_count(&self, syscall_id: usize) -> usize {
+        let inner = self.inner.exclusive_access();
+        let current = inner.current_task;
+        if syscall_id < 512 {
+            inner.tasks[current].syscall_counts[syscall_id]
+        } else {
+            0
+        }
+    }
+
+    /// Increment syscall count for current task
+    pub fn add_syscall_count(&self, syscall_id: usize) {
+        if syscall_id < 512 {
+            let mut inner = self.inner.exclusive_access();
+            let current = inner.current_task;
+            inner.tasks[current].syscall_counts[syscall_id] += 1;
+        }
+    }
+
     /// Run the first task in task list.
     ///
     /// Generally, the first task in task list is an idle task (we call it zero process later).
