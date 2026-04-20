@@ -42,26 +42,28 @@ pub fn sys_trace(trace_request: usize, id: usize, data: usize) -> isize {
     trace!("kernel: sys_trace");
     match trace_request {
         0 => {
-            let id_ptr = id as *const u8;
-            let id = unsafe {
-                id_ptr.read_volatile()
-            };
-            id.into()
-        },
+            let ptr = id as *const u8;
+            unsafe { ptr.read_volatile() as isize }
+        }
         1 => {
-            let id_ptr = id as *mut u8;
-            unsafe { id_ptr.write_volatile( (data & 0xFF) as u8) };
+            let ptr = id as *mut u8;
+            unsafe { ptr.write_volatile((data & 0xFF) as u8) };
             0
-        },
+        }
         2 => {
             if id < 512 {
-                let count = TASK_MANAGER.get_syscall_count(id);
-                TASK_MANAGER.add_syscall_count(id);
-                count as isize
+                if id == 410 {
+                    TASK_MANAGER.add_syscall_count(410);
+                    TASK_MANAGER.get_syscall_count(410) as isize
+                } else {
+                    let count = TASK_MANAGER.get_syscall_count(id);
+                    TASK_MANAGER.add_syscall_count(410);
+                    count as isize
+                }
             } else {
                 -1
             }
-        },
-        _ => -1
+        }
+        _ => -1,
     }
 }
