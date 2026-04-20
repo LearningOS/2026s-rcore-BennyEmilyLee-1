@@ -47,38 +47,45 @@ ch2b_bad_instructions程序产生了IllegalInstruction错误，表明程序做�
 
 2. 深入理解 trap.S 中两个函数 __alltraps 和 __restore 的作用，并回答如下问题:
 
-   1. L40：刚进入 __restore 时，sp 代表了什么值。请指出 __restore 的两种使用情景。
-   回答： sp 指向内核栈上的 TrapContext
-   __restore 的两种使用情景
-   a1. 首次启动用户程序
-   a2. 中断处理完毕后返回用户态
+2.1 L40：刚进入 __restore 时，sp 代表了什么值。请指出 __restore 的两种使用情景。
+回答： sp 指向内核栈上的 TrapContext
+__restore 的两种使用情景
+a1. 首次启动用户程序
+a2. 中断处理完毕后返回用户态
 
-   2. L43-L48：这几行汇编代码特殊处理了哪些寄存器？这些寄存器的的值对于进入用户态有何意义？请分别解释。
+2.2 L43-L48：这几行汇编代码特殊处理了哪些寄存器？这些寄存器的的值对于进入用户态有何意义？请分别解释。
+回答：
 
-   ```s
-   ld t0, 32*8(sp)
-   ld t1, 33*8(sp)
-   ld t2, 2*8(sp)
-   csrw sstatus, t0
-   csrw sepc, t1
-   csrw sscratch, t2
-   ```
+```s
+ld t0, 32*8(sp)
+ld t1, 33*8(sp)
+ld t2, 2*8(sp)
+csrw sstatus, t0
+csrw sepc, t1
+csrw sscratch, t2
+```
 
-   这几行汇编代码特殊处理了sstatus、sepc、sscratch寄存器，其中三个`ld`的作用是从 TrapContext 恢复 sstatus、sepc 和用户栈指针。三个`csrw`的作用是将恢复的值写回 CSR 寄存器。
+这几行汇编代码特殊处理了sstatus、sepc、sscratch寄存器，其中三个`ld`的作用是从 TrapContext 恢复 sstatus、sepc 和用户栈指针。三个`csrw`的作用是将恢复的值写回 CSR 寄存器。
 
 3. L50-L56：为何跳过了 x2 和 x4？
+回答：
 因为 x2 对应的是sp（stack pointer），x4对应的是tp（thread pointer），这两个pointer不用保存，在后续的程序中使用。
 
 4. L60：该指令之后，sp 和 sscratch 中的值分别有什么意义？
+回答：
 sp 表示用户栈指针；sscratch 表示内核栈指针（为下次 trap 准备）。
 
 5. __restore：中发生状态切换在哪一条指令？为何该指令执行之后会进入用户态？
+回答：
 __restore：中发生状态切换在 `sret` 指令。因为 `sret` 跳转到 sepc 指向的用户地址，恢复用户态执行。
 
 6. L13：该指令之后，sp 和 sscratch 中的值分别有什么意义？
+回答：
 L13：该指令之后，sp 表示内核栈指针，sscratch 表示用户栈指针。
 
 7. 从 U 态进入 S 态是哪一条指令发生的？
+回答：
+从 U 态进入 S 态是以下指令：
 
 ```s
 csrrw sp, sscratch, sp
